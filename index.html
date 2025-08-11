@@ -18,16 +18,19 @@
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     color: #eee;
     user-select: none;
+    padding: 10px 0;
   }
   h1 {
     margin: 20px 0 10px;
     font-weight: 700;
     color: #d3f78e;
     text-shadow: 0 0 6px #a3e63588;
+    text-align: center;
   }
   #table {
     position: relative;
-    width: 720px;
+    width: 720px; /* Max width for desktop */
+    max-width: 95vw; /* Ensures it doesn't touch screen edges on mobile */
     height: 420px;
     background:
       radial-gradient(ellipse at center, #2e6c11 0%, #184002 80%, #0b3d02 100%);
@@ -63,6 +66,8 @@
     display: flex;
     gap: 10px;
     min-height: 80px;
+    flex-wrap: wrap; /* Allow cards to wrap on small screens */
+    justify-content: center;
   }
   #playerArea {
     display: flex;
@@ -84,7 +89,9 @@
     display: flex;
     gap: 10px;
     min-height: 80px;
-    align-items: flex-start; /* Aligns cards at the top for split hands */
+    align-items: flex-start;
+    flex-wrap: wrap; /* Allow cards to wrap on small screens */
+    justify-content: center;
   }
   #betChipDisplay {
     width: 100px;
@@ -113,7 +120,7 @@
     transform: translateY(-50%);
     z-index: 10;
     pointer-events: none;
-    transition: opacity 0.3s;
+    transition: opacity 0.3s, transform 0.3s, width 0.3s, height 0.3s;
     opacity: 0;
   }
   #betChipDisplay.visible {
@@ -177,17 +184,21 @@
     min-height: 28px;
     user-select: none;
     text-align: center;
+    padding: 0 10px; /* Prevents text from touching screen edges */
   }
   .controls-container {
       display: flex;
       flex-direction: column;
       gap: 10px;
       margin-top: 10px;
+      width: 100%;
+      align-items: center;
   }
   .control-row {
     display: flex;
     gap: 15px;
     justify-content: center;
+    flex-wrap: wrap; /* Allow buttons to wrap onto next line */
   }
   button {
     background: #a3e635;
@@ -255,7 +266,6 @@
     color: #d3f78e;
     text-shadow: 0 0 5px #a3e635bb;
   }
-  /* NEW FEATURE: Insurance Prompt Styling */
   #insurancePrompt {
       position: absolute;
       top: 50%;
@@ -272,10 +282,82 @@
       gap: 15px;
       box-shadow: 0 0 30px #000;
       backdrop-filter: blur(5px);
+      width: 85%;
+      max-width: 300px; /* Prevent it from getting too wide */
+      text-align: center;
   }
   .hidden {
       display: none !important;
   }
+
+  /* --- START MOBILE-FRIENDLY MODIFICATIONS --- */
+  @media (max-width: 768px) {
+    #table {
+      height: auto; /* Allow height to adjust to content */
+      min-height: 480px; /* Ensure it has a decent minimum height */
+      border-radius: 35px; /* Use fixed radius for responsive shapes */
+      padding: 20px;
+      justify-content: space-around; /* Better spacing on vertical layouts */
+    }
+
+    #playerArea {
+        flex-direction: column; /* Stack score and cards vertically */
+        gap: 12px;
+    }
+
+    #betChipDisplay {
+        width: 70px;
+        height: 70px;
+        font-size: 16px;
+        border-width: 3px;
+        /* Reposition to the bottom right corner inside the table */
+        right: 15px;
+        top: auto;
+        bottom: 15px;
+        transform: none; /* Reset transform from desktop */
+    }
+    
+    .control-row {
+        gap: 10px;
+    }
+
+    button {
+        padding: 9px 15px;
+        font-size: 0.9rem;
+    }
+  }
+
+  @media (max-width: 480px) {
+    h1 {
+        font-size: 1.8rem;
+    }
+    
+    .card {
+        width: 50px;
+        height: 75px;
+        font-size: 20px;
+        border-radius: 5px;
+    }
+
+    #dealerCards, #playerCards {
+        gap: 5px;
+        min-height: 75px; /* Match new card height */
+    }
+
+    #dealerEmoji {
+        font-size: 40px;
+    }
+
+    #dealerScore, #playerScore {
+        font-size: 1.1rem;
+    }
+    
+    #table {
+        min-height: 420px;
+    }
+  }
+  /* --- END MOBILE-FRIENDLY MODIFICATIONS --- */
+
 </style>
 </head>
 <body>
@@ -297,7 +379,6 @@
   </div>
   <div id="betChipDisplay" aria-label="Current bet in chips"></div>
   
-  <!-- NEW FEATURE: Insurance Prompt HTML -->
   <div id="insurancePrompt" class="hidden">
       <span>Dealer shows an Ace. Want Insurance?</span>
       <div class="control-row">
@@ -318,7 +399,6 @@
   <div id="bankrollDisplay">Bankroll: 1000 chips</div>
 </div>
 
-<!-- NEW FEATURE: Restructured controls with new row -->
 <div class="controls-container">
     <div class="control-row">
         <button id="dealBtn" disabled>Deal</button>
@@ -335,7 +415,6 @@
 
 <script>
 (() => {
-  // NEW FEATURE: Number of decks
   const NUM_DECKS = 6;
   
   const suits = ['♠', '♥', '♦', '♣'];
@@ -358,7 +437,6 @@
   const minusBetBtn = document.getElementById('minusBetBtn');
   const plusBetBtn = document.getElementById('plusBetBtn');
 
-  // NEW FEATURE: Get Surrender and Insurance elements
   const surrenderBtn = document.getElementById('surrenderBtn');
   const insurancePrompt = document.getElementById('insurancePrompt');
   const insuranceYesBtn = document.getElementById('insuranceYesBtn');
@@ -378,10 +456,8 @@
   let splitActiveHand = 0;
   let bets = [0];
   let insuranceBet = 0;
-  // NEW FEATURE: State for split aces rule
   let justSplitAces = [];
 
-  // NEW FEATURE: Modified createDeck for multiple decks
   function createDeck() {
     const d = [];
     for (let i = 0; i < NUM_DECKS; i++) {
@@ -448,7 +524,6 @@
     });
 
     if (splitHands) {
-      // Clear the main player hand element
       playerCardsEl.innerHTML = ''; 
       splitHands.forEach((hand, handIdx) => {
         const handContainer = document.createElement('div');
@@ -467,7 +542,6 @@
         });
         playerCardsEl.appendChild(handContainer);
 
-        // Add visual separator between hands
         if (handIdx < splitHands.length - 1) {
           const spacer = document.createElement('div');
           spacer.style.width = '24px';
@@ -534,8 +608,7 @@
     }
     doubleBtn.disabled = doubleDisabled;
     
-    // ===== CORRECTED LOGIC FOR SPLIT BUTTON =====
-    let splitDisabled = true; // Assume disabled by default
+    let splitDisabled = true;
     if (activeHand && !gameOver && !playerStand && activeHand.length === 2) {
         const ranksMatch = activeHand[0].rank === activeHand[1].rank;
         const activeBet = splitHands ? bets[splitActiveHand] : bets[0];
@@ -547,7 +620,6 @@
         }
     }
     splitBtn.disabled = splitDisabled;
-    // ===== END OF CORRECTION =====
 
     const isFirstTurn = playerHand.length === 2 && !splitHands;
     surrenderBtn.disabled = !(isFirstTurn && !gameOver);
@@ -620,7 +692,7 @@
 
     if (dealerHasBJ) {
         if (insuranceBet > 0) {
-            bankroll += insuranceBet * 2 + insuranceBet; // Payout is 2:1 on the bet
+            bankroll += insuranceBet * 2 + insuranceBet;
             setStatus(`Dealer has Blackjack! Insurance pays.`, '#a3f78e');
         } else {
             setStatus(`Dealer has Blackjack! You lose.`, '#ff5555');
@@ -766,7 +838,7 @@
   dealBtn.addEventListener('click', () => {
     if (dealBtn.disabled) return;
     
-    if (deck.length < 52) { // Reshuffle when low on cards
+    if (deck.length < 52) {
         deck = createDeck();
         shuffle(deck);
         setStatus("Reshuffling the shoe...");
@@ -828,7 +900,7 @@
       splitHands = [newHand1, newHand2];
       bets = [betForHand, betForHand];
       justSplitAces = [isSplittingAces, isSplittingAces];
-      playerHand = []; // Important: empty the original hand
+      playerHand = [];
     }
     
     if (isSplittingAces) {
