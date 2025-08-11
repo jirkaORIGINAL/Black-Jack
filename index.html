@@ -374,7 +374,6 @@
   let currentBet = 0;
   let dealerHiddenCardIndex = 1;
   let canDouble = false;
-  let canSplit = false;
   let splitHands = null;
   let splitActiveHand = 0;
   let bets = [0];
@@ -449,14 +448,26 @@
     });
 
     if (splitHands) {
+      // Clear the main player hand element
+      playerCardsEl.innerHTML = ''; 
       splitHands.forEach((hand, handIdx) => {
+        const handContainer = document.createElement('div');
+        handContainer.style.display = 'flex';
+        handContainer.style.gap = '10px';
+        if (handIdx === splitActiveHand && !gameOver) {
+            handContainer.style.boxShadow = '0 0 16px 4px #a3e635';
+            handContainer.style.borderRadius = '12px';
+            handContainer.style.padding = '5px';
+            handContainer.style.margin = '-5px';
+        }
+        
         hand.forEach((card) => {
           const cardEl = createCardElement(card, false);
-          if (handIdx === splitActiveHand && !gameOver) {
-            cardEl.style.boxShadow = '0 0 16px 4px #a3e635, 0 4px 8px rgba(0,0,0,0.5)';
-          }
-          playerCardsEl.appendChild(cardEl);
+          handContainer.appendChild(cardEl);
         });
+        playerCardsEl.appendChild(handContainer);
+
+        // Add visual separator between hands
         if (handIdx < splitHands.length - 1) {
           const spacer = document.createElement('div');
           spacer.style.width = '24px';
@@ -464,12 +475,14 @@
         }
       });
       playerScoreEl.textContent = handValue(splitHands[splitActiveHand]);
-    } else {
+    } else if (playerHand.length > 0) {
       playerHand.forEach((card) => {
         const cardEl = createCardElement(card, false);
         playerCardsEl.appendChild(cardEl);
       });
       playerScoreEl.textContent = handValue(playerHand);
+    } else {
+        playerScoreEl.textContent = 0;
     }
 
     dealerScoreEl.textContent = hideDealerHole ? calculateDealerVisibleScore() : handValue(dealerHand);
@@ -506,29 +519,37 @@
     
     dealBtn.disabled = roundInProgress || betAmount < 1 || betAmount > bankroll;
     
-    const isFirstTurn = playerHand.length === 2 && !splitHands;
     const activeHand = splitHands ? splitHands[splitActiveHand] : playerHand;
-    const canHit = !gameOver && !playerStand && !justSplitAces[splitActiveHand];
+    const canHit = activeHand && !gameOver && !playerStand && !justSplitAces[splitActiveHand];
 
     hitBtn.disabled = !canHit;
-    standBtn.disabled = gameOver || playerStand;
+    standBtn.disabled = !activeHand || gameOver || playerStand;
     
-    let doubleDisabled = !canDouble || gameOver || playerStand || justSplitAces[splitActiveHand] || activeHand.length > 2;
-    if (!doubleDisabled) {
+    let doubleDisabled = true;
+    if (canHit && activeHand.length === 2) {
       const activeBet = splitHands ? bets[splitActiveHand] : bets[0];
-      if (bankroll < activeBet) doubleDisabled = true;
+      if (bankroll >= activeBet) {
+        doubleDisabled = false;
+      }
     }
     doubleBtn.disabled = doubleDisabled;
     
-    let splitDisabled = !canSplit || gameOver || playerStand || (splitHands && splitHands.length >= 4);
-    if (!splitDisabled && activeHand) {
-        const canAffordSplit = bankroll >= bets[splitActiveHand];
-        splitDisabled = !canAffordSplit || activeHand.length !== 2 || activeHand[0].rank !== activeHand[1].rank;
-    } else {
-        splitDisabled = !isFirstTurn;
+    // ===== CORRECTED LOGIC FOR SPLIT BUTTON =====
+    let splitDisabled = true; // Assume disabled by default
+    if (activeHand && !gameOver && !playerStand && activeHand.length === 2) {
+        const ranksMatch = activeHand[0].rank === activeHand[1].rank;
+        const activeBet = splitHands ? bets[splitActiveHand] : bets[0];
+        const canAffordSplit = bankroll >= activeBet;
+        const maxHandsNotReached = !splitHands || splitHands.length < 4;
+
+        if (ranksMatch && canAffordSplit && maxHandsNotReached) {
+            splitDisabled = false;
+        }
     }
     splitBtn.disabled = splitDisabled;
+    // ===== END OF CORRECTION =====
 
+    const isFirstTurn = playerHand.length === 2 && !splitHands;
     surrenderBtn.disabled = !(isFirstTurn && !gameOver);
     restartBtn.disabled = false;
   }
@@ -537,7 +558,7 @@
     bankroll = 1000;
     deck = createDeck();
     shuffle(deck);
-    betInput.value = '';
+    betInput.value = '10';
     resetTableForNewRound();
   }
   
@@ -550,7 +571,6 @@
     splitHands = null;
     splitActiveHand = 0;
     canDouble = false;
-    canSplit = false;
     bets = [0];
     insuranceBet = 0;
     justSplitAces = [];
@@ -585,24 +605,22 @@
         if(bankroll >= insuranceCost) {
             setStatus('Dealer shows an Ace. Insurance?', '#d3f78e');
             insurancePrompt.classList.remove('hidden');
-            return; // Pause the game and wait for player's insurance decision
+            return;
         }
     }
     
     resolveDealerBlackjack();
   }
   
-  // NEW FEATURE: Separated logic for handling dealer's potential Blackjack
   function resolveDealerBlackjack() {
     const pValue = handValue(playerHand);
     const dValue = handValue(dealerHand);
-    const playerHasBJ = pValue === 21;
-    const dealerHasBJ = dValue === 21;
+    const playerHasBJ = pValue === 21 && playerHand.length === 2;
+    const dealerHasBJ = dValue === 21 && dealerHand.length === 2;
 
-    // Handle insurance payout first
     if (dealerHasBJ) {
         if (insuranceBet > 0) {
-            bankroll += insuranceBet * 3; // Payout is 2:1, so you get 3x your insurance bet back
+            bankroll += insuranceBet * 2 + insuranceBet; // Payout is 2:1 on the bet
             setStatus(`Dealer has Blackjack! Insurance pays.`, '#a3f78e');
         } else {
             setStatus(`Dealer has Blackjack! You lose.`, '#ff5555');
@@ -619,13 +637,12 @@
         bankroll += bets[0] + payout; 
         revealDealerHoleCard(() => endGame(`Blackjack! You win ${payout} chips!`, 'win'));
     } else if (dealerHasBJ) {
-        revealDealerHoleCard(() => endGame('', 'lose')); // Message is already set
+        revealDealerHoleCard(() => endGame('', 'lose'));
     } else {
-        if (insuranceBet === 0) { // Only if no insurance message was shown
+        if (insuranceBet === 0) {
              setStatus('Hit or Stand?');
         }
         canDouble = true;
-        canSplit = playerHand.length === 2 && playerHand[0].rank === playerHand[1].rank;
     }
     updateButtons();
   }
@@ -633,7 +650,6 @@
   function playerHit() {
     if (hitBtn.disabled) return;
     canDouble = false;
-    canSplit = false;
 
     const currentHand = splitHands ? splitHands[splitActiveHand] : playerHand;
     currentHand.push(deck.pop());
@@ -645,9 +661,6 @@
       if (splitHands && splitActiveHand < splitHands.length - 1) {
         setStatus(`Hand ${splitActiveHand + 1} busts. Playing next hand.`, '#ff5555');
         splitActiveHand++;
-        const newHand = splitHands[splitActiveHand];
-        canDouble = bankroll >= bets[splitActiveHand] && newHand.length === 2;
-        canSplit = newHand.length === 2 && newHand[0].rank === newHand[1].rank && bankroll >= bets[splitActiveHand];
         renderHands();
       } else {
         playerStandAction();
@@ -657,20 +670,18 @@
   }
 
   function playerStandAction() {
-    if (gameOver || playerStand) return;
+    if (standBtn.disabled) return;
     
     if (splitHands && splitActiveHand < splitHands.length - 1) {
       splitActiveHand++;
       setStatus(`Playing Hand ${splitActiveHand + 1}: Hit or Stand?`);
-      const newHand = splitHands[splitActiveHand];
-      canDouble = bankroll >= bets[splitActiveHand] && newHand.length === 2;
-      canSplit = newHand.length === 2 && newHand[0].rank === newHand[1].rank && bankroll >= bets[splitActiveHand];
       renderHands();
       updateButtons();
       return;
     }
 
     playerStand = true;
+    updateButtons();
     setStatus('Dealer\'s turn...');
     revealDealerHoleCard(dealerPlay);
   }
@@ -698,21 +709,23 @@
     
     if (splitHands) {
       let finalMsg = [];
+      let totalWinnings = 0;
       splitHands.forEach((hand, i) => {
         const pValue = handValue(hand);
         const bet = bets[i];
         if (pValue > 21) {
           finalMsg.push(`Hand ${i+1} Busts`);
         } else if (dValue > 21 || pValue > dValue) {
-          bankroll += bet * 2;
+          totalWinnings += bet * 2;
           finalMsg.push(`Hand ${i+1} Wins`);
         } else if (pValue < dValue) {
           finalMsg.push(`Hand ${i+1} Loses`);
         } else {
-          bankroll += bet;
+          totalWinnings += bet;
           finalMsg.push(`Hand ${i+1} Pushes`);
         }
       });
+      bankroll += totalWinnings;
       const hasWins = finalMsg.some(m => m.includes('Wins'));
       const allLost = finalMsg.every(m => m.includes('Loses') || m.includes('Busts'));
       endGame(finalMsg.join(', ') + '.', hasWins ? 'win' : allLost ? 'lose' : 'push');
@@ -753,17 +766,16 @@
   dealBtn.addEventListener('click', () => {
     if (dealBtn.disabled) return;
     
-    if (deck.length < 20) {
+    if (deck.length < 52) { // Reshuffle when low on cards
         deck = createDeck();
         shuffle(deck);
         setStatus("Reshuffling the shoe...");
     }
     
+    resetTableForNewRound();
     dealCards();
     
-    cardAnimationMode = 'all';
     renderHands();
-    setTimeout(() => { cardAnimationMode = 'last'; }, 350);
     
     checkInitialBlackjack();
     
@@ -785,32 +797,15 @@
       bets[0] *= 2;
     }
     
-    canDouble = false;
-    canSplit = false;
     updateBankrollUI();
 
     const currentHand = splitHands ? splitHands[splitActiveHand] : playerHand;
     currentHand.push(deck.pop());
     renderHands();
-
-    const pValue = handValue(currentHand);
-
-    if (pValue > 21) {
-      if (splitHands && splitActiveHand < splitHands.length - 1) {
-        setStatus(`Hand ${splitActiveHand + 1} busts on double down!`, '#ff5555');
-        splitActiveHand++;
-        canDouble = bankroll >= bets[splitActiveHand] && splitHands[splitActiveHand].length === 2;
-        renderHands();
-        updateButtons();
-      } else {
-        playerStandAction();
-      }
-    } else {
-      playerStandAction();
-    }
+    
+    playerStandAction();
   });
 
-  // NEW FEATURE: Heavily modified split logic for re-splitting and Aces rule
   splitBtn.addEventListener('click', () => {
     if (splitBtn.disabled) return;
     
@@ -833,14 +828,11 @@
       splitHands = [newHand1, newHand2];
       bets = [betForHand, betForHand];
       justSplitAces = [isSplittingAces, isSplittingAces];
+      playerHand = []; // Important: empty the original hand
     }
     
-    const currentHand = splitHands[splitActiveHand];
-    canDouble = bankroll >= bets[splitActiveHand] && currentHand.length === 2;
-    canSplit = currentHand.length === 2 && currentHand[0].rank === currentHand[1].rank && bankroll >= bets[splitActiveHand];
-    
     if (isSplittingAces) {
-        playerStandAction(); // Automatically stand on the first Ace to move to the next.
+        playerStandAction();
     } else {
         setStatus(`Playing Hand ${splitActiveHand + 1}: Hit or Stand?`);
     }
@@ -850,7 +842,6 @@
     updateButtons();
   });
   
-  // NEW FEATURE: Surrender Logic
   surrenderBtn.addEventListener('click', () => {
       if(surrenderBtn.disabled) return;
       const refund = currentBet / 2;
@@ -858,7 +849,6 @@
       endGame(`You surrendered. Returned ${refund} chips.`, 'push');
   });
   
-  // NEW FEATURE: Insurance Logic
   insuranceYesBtn.addEventListener('click', () => {
       const cost = Math.ceil(currentBet / 2);
       bankroll -= cost;
@@ -878,7 +868,7 @@
     let currentValue = Number(betInput.value) || 0;
     let newValue = currentValue + amount;
     
-    if (newValue < 1) newValue = 1;
+    if (newValue < 10) newValue = 10;
     if (newValue > bankroll) newValue = bankroll;
 
     betInput.value = newValue;
