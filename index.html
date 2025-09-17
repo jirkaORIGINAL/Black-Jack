@@ -2,7 +2,6 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <!-- This is the crucial tag for mobile-friendliness -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Scoundrel (Responsive)</title>
     <style>
@@ -37,7 +36,6 @@
         }
 
         .game-container {
-            /* Responsive Change: Use max-width and percentage */
             max-width: 650px;
             width: 95%;
             padding: 30px;
@@ -52,40 +50,14 @@
         }
 
         #game-over-overlay {
-            position: absolute;
-            top: 0; left: 0; right: 0; bottom: 0;
-            background-color: rgba(0, 0, 0, 0.85);
-            display: none;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            text-align: center;
-            border-radius: 15px;
-            z-index: 100;
-            padding: 20px;
+            position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+            background-color: rgba(0, 0, 0, 0.85); display: none;
+            flex-direction: column; justify-content: center; align-items: center;
+            text-align: center; border-radius: 15px; z-index: 100; padding: 20px;
         }
-
-        #game-over-message {
-            font-size: 2em;
-            font-family: var(--font-fancy);
-            line-height: 1.5;
-            color: var(--color-text);
-        }
-
-        #game-over-message span {
-            color: var(--color-accent);
-            font-size: 1.5em;
-            display: block;
-            margin: 10px 0;
-        }
-
-        #game-over-message small {
-            font-size: 0.7em;
-            font-family: var(--font-main);
-            color: #ccc;
-            display: block;
-            margin-top: 20px;
-        }
+        #game-over-message { font-size: 2em; font-family: var(--font-fancy); line-height: 1.5; color: var(--color-text); }
+        #game-over-message span { color: var(--color-accent); font-size: 1.5em; display: block; margin: 10px 0; }
+        #game-over-message small { font-size: 0.7em; font-family: var(--font-main); color: #ccc; display: block; margin-top: 20px; }
 
         .info-bar { display: flex; justify-content: space-between; width: 100%; margin-bottom: 20px; font-family: var(--font-fancy); font-size: 1.5em; }
         .player-stats { width: 100%; display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; gap: 20px; }
@@ -97,12 +69,7 @@
         #weapon { font-weight: bold; }
 
         .game-board { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-bottom: 20px; width: 100%; }
-        .card-slot {
-            /* Responsive Change: Aspect ratio maintains shape */
-            aspect-ratio: 2.5 / 3.5;
-            height: auto;
-            width: 100%;
-            border-radius: 10px; position: relative; background-color: rgba(0, 0, 0, 0.3); border: 2px dashed #444; display: flex; flex-direction: column; justify-content: center; align-items: center; }
+        .card-slot { aspect-ratio: 2.5 / 3.5; height: auto; width: 100%; border-radius: 10px; position: relative; background-color: rgba(0, 0, 0, 0.3); border: 2px dashed #444; display: flex; flex-direction: column; justify-content: center; align-items: center; }
         .card-slot:hover .card { border-color: var(--color-accent); transform: translateY(-5px); }
         .card-slot .key-hint { font-family: var(--font-fancy); color: #666; font-size: 2em; }
 
@@ -116,45 +83,40 @@
         .card-value-bottom { align-self: flex-end; transform: rotate(180deg); }
         .card-suit { font-size: 3.5em; text-align: center; }
 
-        .controls-info { width: 100%; display: flex; justify-content: space-between; font-size: 1.1em; color: #aaa; }
-        .avoid-info.disabled { text-decoration: line-through; color: #666; cursor: not-allowed; }
+        .controls-info { width: 100%; display: flex; justify-content: space-between; align-items: center; font-size: 1.1em; color: #aaa; }
         .turn-status.active { color: var(--color-accent); font-weight: bold; }
+        
+        .control-btn {
+            background-color: var(--color-surface);
+            border: 1px solid #111;
+            color: var(--color-text);
+            padding: 8px 15px;
+            border-radius: 8px;
+            font-family: var(--font-main);
+            font-size: 1em;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        .control-btn:hover { background-color: #3e5670; }
+        .control-btn:disabled {
+            background-color: #333;
+            color: #666;
+            cursor: not-allowed;
+            text-decoration: line-through;
+        }
 
-        /* ----------- RESPONSIVE STYLES FOR MOBILE ----------- */
         @media (max-width: 600px) {
-            .game-container {
-                padding: 15px;
-            }
-
-            .info-bar {
-                font-size: 1.2em;
-            }
-
-            .player-stats {
-                flex-direction: column; /* Stack health and weapon vertically */
-                align-items: stretch; /* Make them full-width */
-                gap: 15px;
-            }
-
-            .weapon-slot {
-                width: 100%; /* Occupy full width */
-            }
-
-            .game-board {
-                gap: 10px; /* Reduce gap between cards */
-            }
-            
+            .game-container { padding: 15px; }
+            .info-bar { font-size: 1.2em; }
+            .player-stats { flex-direction: column; align-items: stretch; gap: 15px; }
+            .weapon-slot { width: 100%; }
+            .game-board { gap: 10px; }
             .card-slot .key-hint { font-size: 1.5em; }
             .card-value-top, .card-value-bottom { font-size: 1em; padding: 4px 7px; }
             .card-suit { font-size: 2em; }
-
-            .controls-info {
-                font-size: 0.9em;
-            }
-
-            #game-over-message {
-                font-size: 1.5em;
-            }
+            .controls-info { font-size: 0.9em; }
+            #game-over-message { font-size: 1.5em; }
+            .control-btn { padding: 10px; }
         }
 
     </style>
@@ -187,9 +149,9 @@
     </div>
     
     <div class="controls-info">
-        <div class="avoid-info" id="avoid-info">[F] Avoid Room</div>
+        <button class="control-btn" id="avoid-btn">[F] Avoid</button>
         <div id="turn-status"></div>
-        <div class="restart-info">[T] Restart</div>
+        <button class="control-btn" id="restart-btn">[T] Restart</button>
     </div>
 </div>
 
@@ -209,11 +171,12 @@
         healthBar: document.getElementById('health-bar'),
         healthText: document.getElementById('health-text'),
         weapon: document.getElementById('weapon'),
-        avoidInfo: document.getElementById('avoid-info'),
         turnStatus: document.getElementById('turn-status'),
         cardSlots: [document.getElementById('slot-0'), document.getElementById('slot-1'), document.getElementById('slot-2'), document.getElementById('slot-3')],
         gameOverOverlay: document.getElementById('game-over-overlay'),
-        gameOverMessage: document.getElementById('game-over-message')
+        gameOverMessage: document.getElementById('game-over-message'),
+        avoidBtn: document.getElementById('avoid-btn'),
+        restartBtn: document.getElementById('restart-btn'),
     };
 
     function createDeck() {
@@ -337,16 +300,14 @@
         
         if (weapon) {
             const weaponText = `${weapon.value}${getSuitSymbol(weapon.suit)}`;
-            const detailText = (lastMonsterValue === Infinity)
-                ? ` (Vs Any)`
-                : ` (Vs &lt; ${lastMonsterValue})`;
+            const detailText = (lastMonsterValue === Infinity) ? ` (Vs Any)` : ` (Vs &lt; ${lastMonsterValue})`;
             dom.weapon.innerHTML = `${weaponText}<span style="font-size: 0.8em; color: #ccc; margin-left: 5px;">${detailText}</span>`;
         } else {
             dom.weapon.textContent = 'None';
         }
         
         const canAvoid = !avoidedLastRoom && cardsPlayedThisTurn === 0;
-        dom.avoidInfo.classList.toggle('disabled', !canAvoid);
+        dom.avoidBtn.disabled = !canAvoid;
         
         dom.turnStatus.textContent = potionUsedThisTurn ? 'Potion Used' : '';
         dom.turnStatus.classList.toggle('active', potionUsedThisTurn);
@@ -383,7 +344,7 @@
             }
         }
         
-        const message = `${messageTitle}<br>Final Score: <span>${finalScore}</span><small>Press [T] to Restart</small>`;
+        const message = `${messageTitle}<br>Final Score: <span>${finalScore}</span><small>Press [T] or Click Restart</small>`;
         dom.gameOverMessage.innerHTML = message;
         dom.gameOverOverlay.style.display = 'flex';
     }
@@ -421,7 +382,12 @@
         else if (key === 'F') avoidRoom();
     }
 
+    // Attach all event listeners
     document.addEventListener('keydown', handleKeyPress);
+    dom.avoidBtn.addEventListener('click', avoidRoom);
+    dom.restartBtn.addEventListener('click', restartGame);
+    
+    // Initial setup
     restartGame();
 
 </script>
