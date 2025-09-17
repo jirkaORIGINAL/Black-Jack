@@ -54,6 +54,7 @@
             background-color: rgba(0, 0, 0, 0.85); display: none;
             flex-direction: column; justify-content: center; align-items: center;
             text-align: center; border-radius: 15px; z-index: 100; padding: 20px;
+            cursor: pointer; /* Indicates it's clickable */
         }
         #game-over-message { font-size: 2em; font-family: var(--font-fancy); line-height: 1.5; color: var(--color-text); }
         #game-over-message span { color: var(--color-accent); font-size: 1.5em; display: block; margin: 10px 0; }
@@ -344,7 +345,7 @@
             }
         }
         
-        const message = `${messageTitle}<br>Final Score: <span>${finalScore}</span><small>Press [T] or Click Restart</small>`;
+        const message = `${messageTitle}<br>Final Score: <span>${finalScore}</span><small>Tap Screen or Press [T] to Restart</small>`;
         dom.gameOverMessage.innerHTML = message;
         dom.gameOverOverlay.style.display = 'flex';
     }
@@ -386,6 +387,7 @@
     document.addEventListener('keydown', handleKeyPress);
     dom.avoidBtn.addEventListener('click', avoidRoom);
     dom.restartBtn.addEventListener('click', restartGame);
+    dom.gameOverOverlay.addEventListener('click', restartGame); // Make the overlay clickable
     
     // Initial setup
     restartGame();
