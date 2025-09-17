@@ -8,7 +8,7 @@ A responsive, single-file HTML implementation of the classic solo card game **Sc
 
 This game is hosted on GitHub Pages and can be played directly in your browser. No download is required.
 
-### [**Click Here to Play!**]([https://your-username.github.io/your-repository-name/](https://jirkaoriginal.github.io/Scoundrel-Speedrun-Edition/))
+### [**Click Here to Play!**](https://jirkaoriginal.github.io/Scoundrel-Speedrun-Edition/)
 
 ## ✨ Features
 
